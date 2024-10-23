@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
 import { AuthLayout } from '../components/AuthLayout';
 import { Input } from '../components/Input';
 import { Link, useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ export function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
@@ -27,22 +28,33 @@ export function Register() {
           message: 'Cuenta creada exitosamente. Por favor, inicia sesión.' 
         } 
       });
-    } catch (err) {
-      setError('No se pudo crear la cuenta');
+    } catch (err: any) {
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Este email ya está registrado');
+      } else if (err.code === 'auth/weak-password') {
+        setError('La contraseña debe tener al menos 6 caracteres');
+      } else {
+        setError('Error al crear la cuenta');
+      }
     }
   };
 
   const handleGoogleSignIn = async () => {
+    setError('');
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await signInWithPopup(auth, googleProvider);
       await auth.signOut();
       navigate('/login', { 
         state: { 
           message: 'Cuenta creada exitosamente. Por favor, inicia sesión.' 
         } 
       });
-    } catch (err) {
-      setError('No se pudo registrar con Google');
+    } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('Registro cancelado');
+      } else {
+        setError('Error al registrarse con Google');
+      }
     }
   };
 

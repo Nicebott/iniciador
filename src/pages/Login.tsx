@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
 import { AuthLayout } from '../components/AuthLayout';
 import { Input } from '../components/Input';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -22,6 +22,7 @@ export function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/dashboard');
@@ -31,12 +32,16 @@ export function Login() {
   };
 
   const handleGoogleSignIn = async () => {
+    setError('');
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, googleProvider);
       navigate('/dashboard');
-    } catch (err) {
-      setError('No se pudo iniciar sesión con Google');
+    } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('Inicio de sesión cancelado');
+      } else {
+        setError('Error al iniciar sesión con Google');
+      }
     }
   };
 
